@@ -1,7 +1,7 @@
 /**
  * ===================================================================
  * ESPORTS SCORER & LIVESTREAM CONTROLLER - JAVASCRIPT ENGINE
- * PWA Offline Engine, Non-Zoomable Touch Guards, Instant Auto-Sync & Drag Reordering
+ * Pure Black & White, Android PWA Enforcement, Non-Zoomable Touch Guards & Instant Auto-Sync
  * ===================================================================
  */
 
@@ -139,14 +139,10 @@ const btnParseBulkTeams = document.getElementById('btnParseBulkTeams');
 const teamNamesEditor = document.getElementById('teamNamesEditor');
 const btnSaveTeamNamesModal = document.getElementById('btnSaveTeamNamesModal');
 
-// PWA Elements
+// PWA & Android Black Screen Elements
 const btnInstallPWA = document.getElementById('btnInstallPWA');
-const pwaInstallModal = document.getElementById('pwaInstallModal');
-const btnClosePwaModal = document.getElementById('btnClosePwaModal');
-const btnDismissPwaModal = document.getElementById('btnDismissPwaModal');
-const iosInstallSteps = document.getElementById('iosInstallSteps');
-const androidInstallSteps = document.getElementById('androidInstallSteps');
-const btnTriggerAndroidInstall = document.getElementById('btnTriggerAndroidInstall');
+const forceInstallGate = document.getElementById('forceInstallGate');
+const btnGateInstall = document.getElementById('btnGateInstall');
 
 let deferredInstallPrompt = null;
 
@@ -515,7 +511,7 @@ function setBroadcastScene(sceneName) {
   localStorage.setItem(STORAGE_KEY_SCENE, sceneName);
   updateBroadcastSceneUI();
 
-  showToast(`📡 OBS Scoreboard: ${sceneName.toUpperCase()}`);
+  showToast(`OBS Scoreboard: ${sceneName.toUpperCase()}`);
 
   if (state.scriptUrl) {
     const payload = { action: "set_active_view", view: sceneName };
@@ -855,7 +851,7 @@ function copyStandingsToClipboard() {
 }
 
 // ==========================================
-// 📲 PWA INSTALLATION ENGINE & GESTURE GUARDS
+// 📲 PWA ENGINE & ANDROID BLACK SCREEN
 // ==========================================
 
 // Register Service Worker for Offline & Fast App Launch
@@ -863,7 +859,7 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
       .then((reg) => {
-        console.log('Service Worker Registered successfully:', reg.scope);
+        console.log('Service Worker Registered:', reg.scope);
       })
       .catch((err) => {
         console.log('Service Worker registration failed:', err);
@@ -871,19 +867,55 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Capture Android/Chrome beforeinstallprompt
+// Check if running in Standalone App Mode
+function isStandalone() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const isModeParam = urlParams.get('mode') === 'standalone';
+  const isMatchMedia = window.matchMedia('(display-mode: standalone)').matches;
+  const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+  const isMinimal = window.matchMedia('(display-mode: minimal-ui)').matches;
+  const isNavStandalone = window.navigator.standalone === true;
+  return isModeParam || isMatchMedia || isFullscreen || isMinimal || isNavStandalone;
+}
+
+// Detect Android Browser (Only when NOT running in standalone installed app mode)
+function isAndroidBrowser() {
+  const ua = navigator.userAgent || '';
+  const isAndroid = /Android/i.test(ua);
+  return isAndroid && !isStandalone();
+}
+
+// 🛑 Enforce Pure Black Screen for Android Browser
+function checkAndEnforceAppGate() {
+  if (!forceInstallGate) return;
+
+  if (isStandalone()) {
+    // Running as installed app! Full access
+    forceInstallGate.classList.add('hidden-gate');
+    document.body.style.overflow = '';
+    if (btnInstallPWA) btnInstallPWA.style.display = 'none';
+    return;
+  }
+
+  // Only show black screen for Android browser
+  if (isAndroidBrowser()) {
+    forceInstallGate.classList.remove('hidden-gate');
+    document.body.style.overflow = 'hidden';
+  } else {
+    // Non-Android / Desktop / App mode -> hide black screen
+    forceInstallGate.classList.add('hidden-gate');
+    document.body.style.overflow = '';
+  }
+}
+
+// Capture Android beforeinstallprompt
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
   if (btnInstallPWA) {
     btnInstallPWA.style.display = 'flex';
   }
-  if (androidInstallSteps) {
-    androidInstallSteps.classList.remove('hidden-section');
-  }
-  if (iosInstallSteps) {
-    iosInstallSteps.classList.add('hidden-section');
-  }
+  checkAndEnforceAppGate();
 });
 
 // App successfully installed
@@ -892,53 +924,30 @@ window.addEventListener('appinstalled', () => {
   if (btnInstallPWA) {
     btnInstallPWA.style.display = 'none';
   }
-  showToast('🎉 Esports Scorer PRO installed as App!');
+  if (forceInstallGate) {
+    forceInstallGate.classList.add('hidden-gate');
+    document.body.style.overflow = '';
+  }
+  showToast('🎉 Esports Scorer PRO installed!');
 });
 
-// Detect iOS device
-function isIOS() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-}
-
-function isStandalone() {
-  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-}
-
-function openPwaInstallModal() {
+function triggerInstallPrompt() {
   if (deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
-        showToast('App installing to home screen...');
+        showToast('Installing app to home screen...');
       }
       deferredInstallPrompt = null;
     });
-    return;
-  }
-
-  // If already installed or on iOS/Safari, show helper modal
-  if (isIOS()) {
-    if (iosInstallSteps) iosInstallSteps.classList.remove('hidden-section');
-    if (androidInstallSteps) androidInstallSteps.classList.add('hidden-section');
   } else {
-    if (iosInstallSteps) iosInstallSteps.classList.add('hidden-section');
-    if (androidInstallSteps) androidInstallSteps.classList.remove('hidden-section');
-  }
-
-  if (pwaInstallModal) {
-    pwaInstallModal.classList.add('active');
-  }
-}
-
-function closePwaInstallModal() {
-  if (pwaInstallModal) {
-    pwaInstallModal.classList.remove('active');
+    showToast("Tap Chrome menu (⋮) -> 'Install App' or 'Add to Home screen'");
   }
 }
 
 // Mobile Non-Zoomable & Touch-Action Guards
 function initNonZoomableGuards() {
-  // Prevent iOS Safari gesture pinch-zoom
+  // Prevent iOS/Safari gesture pinch-zoom
   document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
   document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
   document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
@@ -955,7 +964,7 @@ function initNonZoomableGuards() {
   document.addEventListener('touchend', (e) => {
     const currentTime = Date.now();
     if (currentTime - lastTouchEndTime <= 300) {
-      const tag = e.target.tagName.toLowerCase();
+      const tag = e.target.tagName ? e.target.tagName.toLowerCase() : '';
       if (tag !== 'input' && tag !== 'textarea') {
         e.preventDefault();
       }
@@ -1006,23 +1015,11 @@ livestreamSceneButtons.addEventListener('click', (e) => {
 });
 
 if (btnInstallPWA) {
-  btnInstallPWA.addEventListener('click', openPwaInstallModal);
+  btnInstallPWA.addEventListener('click', triggerInstallPrompt);
 }
-if (btnClosePwaModal) {
-  btnClosePwaModal.addEventListener('click', closePwaInstallModal);
-}
-if (btnDismissPwaModal) {
-  btnDismissPwaModal.addEventListener('click', closePwaInstallModal);
-}
-if (btnTriggerAndroidInstall) {
-  btnTriggerAndroidInstall.addEventListener('click', () => {
-    closePwaInstallModal();
-    if (deferredInstallPrompt) {
-      deferredInstallPrompt.prompt();
-    } else {
-      showToast("Tap Chrome's (⋮) menu -> Install App");
-    }
-  });
+
+if (btnGateInstall) {
+  btnGateInstall.addEventListener('click', triggerInstallPrompt);
 }
 
 btnOpenTeamsModal.addEventListener('click', openTeamsModal);
@@ -1047,7 +1044,7 @@ btnSaveConfig.addEventListener('click', () => {
 });
 
 // Close modals on click outside
-[teamsModal, settingsModal, pwaInstallModal].forEach(modal => {
+[teamsModal, settingsModal].forEach(modal => {
   if (modal) {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) modal.classList.remove('active');
@@ -1055,10 +1052,9 @@ btnSaveConfig.addEventListener('click', () => {
   }
 });
 
-// Hide Install button if already running in standalone PWA mode
-if (isStandalone() && btnInstallPWA) {
-  btnInstallPWA.style.display = 'none';
-}
+// Check & Enforce Android Black Screen
+checkAndEnforceAppGate();
+window.addEventListener('resize', checkAndEnforceAppGate);
 
 // Instant 0ms Initial Render
 renderUI();

@@ -2,13 +2,13 @@
   "name": "Esports Scorer & Livestream Controller",
   "short_name": "Scorer PRO",
   "description": "Real-time Mobile Scorer and OBS Livestream Controller with instant Auto-Sync and drag-and-drop ranking.",
-  "start_url": "./index.html",
+  "start_url": "./index.html?mode=standalone",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "window-controls-overlay", "minimal-ui"],
   "orientation": "portrait",
-  "background_color": "#0a0e17",
-  "theme_color": "#0a0e17",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "lang": "en",
   "categories": ["sports", "games", "utilities"],
   "icons": [
@@ -48,7 +48,7 @@
       "name": "Live Scorer",
       "short_name": "Scorer",
       "description": "Open Live Scorer",
-      "url": "./index.html",
+      "url": "./index.html?mode=standalone",
       "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }]
     },
     {
