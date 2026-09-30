@@ -1,7 +1,7 @@
 /**
  * ===================================================================
  * ESPORTS SCORER & LIVESTREAM CONTROLLER - JAVASCRIPT ENGINE
- * Pure Black & White, Android PWA Enforcement, Non-Zoomable Touch Guards & Instant Auto-Sync
+ * Pure Black & White, Inline SVG Icons, Android App Enforcement & Fast Auto-Sync
  * ===================================================================
  */
 
@@ -51,6 +51,14 @@ function getPlacePts(rankNum) {
 
 const TOTAL_GAMES = 6;
 const TOTAL_TEAMS = 12;
+
+// SVG Icon Constants
+const SVG_ICONS = {
+  trophy: `<svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7v2h10v-2h-2c-.55 0-1-.45-1-1v-2.34"></path><path d="M6 4h12v6a6 6 0 0 1-12 0V4Z"></path></svg>`,
+  skull: `<svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="1.5" fill="currentColor"/><circle cx="15" cy="12" r="1.5" fill="currentColor"/><path d="M8 20v2h8v-2M10 17v3M14 17v3M4 10a8 8 0 1 1 16 0c0 4.5-3.5 7-3.5 7H7.5S4 14.5 4 10z"/></svg>`,
+  alive: `<svg class="svg-icon" viewBox="0 0 24 24" width="10" height="10" fill="currentColor"><circle cx="12" cy="12" r="5"/></svg>`,
+  grip: `<svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>`
+};
 
 // App State (Instant 0ms Cache Load)
 const state = {
@@ -143,6 +151,7 @@ const btnSaveTeamNamesModal = document.getElementById('btnSaveTeamNamesModal');
 const btnInstallPWA = document.getElementById('btnInstallPWA');
 const forceInstallGate = document.getElementById('forceInstallGate');
 const btnGateInstall = document.getElementById('btnGateInstall');
+const gateInstalledNote = document.getElementById('gateInstalledNote');
 
 let deferredInstallPrompt = null;
 
@@ -204,7 +213,7 @@ function renderGameScoring() {
         <!-- Top Info -->
         <div class="team-card-top">
           <div class="card-top-left">
-            <span class="drag-handle" title="Drag to reorder rank">⠿</span>
+            <span class="drag-handle" title="Drag to reorder rank">${SVG_ICONS.grip}</span>
             <span class="team-rank-badge ${rankClass}">#${rankNum}</span>
             <span class="team-name-label">${escapeHtml(t.name)}</span>
           </div>
@@ -228,12 +237,13 @@ function renderGameScoring() {
 
           <!-- Elimination Toggle Button -->
           <button class="eliminate-btn ${isElim ? 'eliminated' : 'alive'}" onclick="toggleElimination(${index})">
-            <span>${isElim ? '💀 Eliminated' : '🟢 Alive'}</span>
+            ${isElim ? SVG_ICONS.skull : SVG_ICONS.alive}
+            <span>${isElim ? 'Eliminated' : 'Alive'}</span>
           </button>
 
           <!-- Booyah Manual Button -->
           <button class="${booyahBtnClass}" onclick="toggleBooyah(${index})">
-            <span>🏆</span>
+            ${SVG_ICONS.trophy}
             <span>${isWinner ? 'BOOYAH!' : 'Booyah'}</span>
           </button>
         </div>
@@ -243,7 +253,7 @@ function renderGameScoring() {
 
   statGameTotalKills.textContent = `Total Kills: ${totalKills}`;
   if (booyahWinnerTeam) {
-    statGameBooyah.textContent = `🏆 Booyah: ${booyahWinnerTeam.name}`;
+    statGameBooyah.textContent = `Booyah: ${booyahWinnerTeam.name}`;
   } else {
     statGameBooyah.textContent = `Booyah: Pending (${12 - elimCount} Alive)`;
   }
@@ -338,7 +348,6 @@ function attachDragEvents() {
   const cards = teamCardsList.querySelectorAll('.team-card');
 
   cards.forEach(card => {
-    // Desktop Drag & Drop
     card.addEventListener('dragstart', (e) => {
       draggedItemIndex = parseInt(card.dataset.index, 10);
       card.classList.add('dragging');
@@ -373,7 +382,7 @@ function attachDragEvents() {
     // Touch Support for Mobile
     const handle = card.querySelector('.drag-handle');
     if (handle) {
-      handle.addEventListener('touchstart', (e) => {
+      handle.addEventListener('touchstart', () => {
         draggedItemIndex = parseInt(card.dataset.index, 10);
         card.classList.add('dragging');
       }, { passive: true });
@@ -449,13 +458,13 @@ window.toggleBooyah = function(teamIndex) {
     item.isBooyah = true;
     item.isEliminated = false;
 
-    // Move Booyah team to #1 position (index 0) so it takes Rank #1 (12 placement points)
+    // Move Booyah team to #1 position
     if (teamIndex !== 0) {
       const [winner] = list.splice(teamIndex, 1);
       list.unshift(winner);
     }
 
-    showToast(`🏆 BOOYAH! ${item.name} takes Rank #1 (12 Pts)!`);
+    showToast(`BOOYAH! ${item.name} takes Rank #1 (12 Pts)`);
   }
 
   markUnsaved();
@@ -476,9 +485,9 @@ window.toggleElimination = function(teamIndex) {
   }
 
   if (item.isEliminated) {
-    showToast(`💀 ${item.name} marked Eliminated`);
+    showToast(`${item.name} marked Eliminated`);
   } else {
-    showToast(`🟢 ${item.name} marked Alive`);
+    showToast(`${item.name} marked Alive`);
   }
 
   const elimCount = list.filter(t => t.isEliminated).length;
@@ -489,12 +498,11 @@ window.toggleElimination = function(teamIndex) {
       survivor.isBooyah = true;
       survivor.isEliminated = false;
       
-      // Move last survivor to #1 position (index 0)
       if (survivorIndex !== 0) {
         const [movedSurvivor] = list.splice(survivorIndex, 1);
         list.unshift(movedSurvivor);
       }
-      showToast(`🏆 BOOYAH! ${survivor.name} is the last survivor (Rank #1 - 12 Pts)!`);
+      showToast(`BOOYAH! ${survivor.name} is the last survivor (Rank #1)`);
     }
   }
 
@@ -598,7 +606,7 @@ function updateStatusBar() {
   } else {
     statusDot.className = 'status-dot synced';
     statusLabel.textContent = 'Auto-Saved';
-    saveStateText.textContent = '⚡ Instant Auto-Save Active';
+    saveStateText.textContent = 'Instant Auto-Save Active';
     saveTimeText.textContent = 'Google Sheets Connected';
   }
 }
@@ -709,7 +717,7 @@ async function fetchFromSheet() {
 }
 
 // ==========================================
-// 👥 12 TEAMS SETUP MODAL & BULK PASTE
+// 12 TEAMS SETUP MODAL & BULK PASTE
 // ==========================================
 
 function openTeamsModal() {
@@ -745,7 +753,7 @@ function parseBulkTeams() {
       input.value = lines[i] || `TEAM ${i + 1}`;
     }
   }
-  showToast(`⚡ Auto-filled ${Math.min(lines.length, TOTAL_TEAMS)} team names!`);
+  showToast(`Auto-filled ${Math.min(lines.length, TOTAL_TEAMS)} team names!`);
 }
 
 async function saveTeamsFromModal() {
@@ -767,7 +775,7 @@ async function saveTeamsFromModal() {
   saveToLocalStorage();
   closeTeamsModal();
   renderUI();
-  showToast("✅ 12 Teams updated across all 6 games!");
+  showToast("12 Teams updated across all 6 games!");
 
   if (state.scriptUrl) {
     const payload = { action: "save_teams", teamNames: newNames };
@@ -795,7 +803,7 @@ function closeSettings() {
 function resetCurrentGame() {
   const gameKey = state.activeTab;
   const gameNum = gameKey.replace('game', '');
-  if (!confirm(`Are you sure you want to reset all kills & ranks for GAME ${gameNum} to default?`)) return;
+  if (!confirm(`Reset all kills & ranks for GAME ${gameNum} to default?`)) return;
 
   if (state.games[gameKey]) {
     state.games[gameKey].forEach((t, idx) => {
@@ -812,7 +820,7 @@ function resetCurrentGame() {
 }
 
 function resetAllGames() {
-  if (!confirm("⚠️ DANGER: Reset ALL 6 games to 0? This cannot be undone.")) return;
+  if (!confirm("Reset ALL 6 games to 0? This cannot be undone.")) return;
 
   for (let g = 1; g <= TOTAL_GAMES; g++) {
     state.games[`game${g}`].forEach((t, idx) => {
@@ -831,9 +839,9 @@ function resetAllGames() {
 
 function copyStandingsToClipboard() {
   const overall = calculateOverallStandings();
-  let text = `🏆 *ESPORTS TOURNAMENT OVERALL STANDINGS* 🏆\n`;
+  let text = `*ESPORTS TOURNAMENT OVERALL STANDINGS*\n`;
   text += `━━━━━━━━━━━━━━━━━━━━━\n`;
-  text += `Rank | Team | Matches | 🏆 | Kills | PTS\n`;
+  text += `Rank | Team | Matches | Won | Kills | PTS\n`;
   text += `━━━━━━━━━━━━━━━━━━━━━\n`;
 
   overall.forEach((t, idx) => {
@@ -844,17 +852,17 @@ function copyStandingsToClipboard() {
   text += `Generated live from Esports Scorer App`;
 
   navigator.clipboard.writeText(text).then(() => {
-    showToast("📋 Standings copied to clipboard for WhatsApp/Discord!");
+    showToast("Standings copied to clipboard!");
   }).catch(() => {
     showToast("Failed to copy automatically.");
   });
 }
 
 // ==========================================
-// 📲 PWA ENGINE & ANDROID BLACK SCREEN
+// PWA ENGINE & ANDROID BLACK SCREEN
 // ==========================================
 
-// Register Service Worker for Offline & Fast App Launch
+// Register Service Worker
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
@@ -867,7 +875,7 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Check if running in Standalone App Mode
+// Check if running in Standalone App Mode (Launched from App icon)
 function isStandalone() {
   const urlParams = new URLSearchParams(window.location.search);
   const isModeParam = urlParams.get('mode') === 'standalone';
@@ -885,24 +893,24 @@ function isAndroidBrowser() {
   return isAndroid && !isStandalone();
 }
 
-// 🛑 Enforce Pure Black Screen for Android Browser
+// Enforce Pure Black Screen for Android Browser
 function checkAndEnforceAppGate() {
   if (!forceInstallGate) return;
 
   if (isStandalone()) {
-    // Running as installed app! Full access
+    // Running as installed app! Full access granted
     forceInstallGate.classList.add('hidden-gate');
     document.body.style.overflow = '';
     if (btnInstallPWA) btnInstallPWA.style.display = 'none';
     return;
   }
 
-  // Only show black screen for Android browser
+  // In Android browser tab: Keep black screen locked
   if (isAndroidBrowser()) {
     forceInstallGate.classList.remove('hidden-gate');
     document.body.style.overflow = 'hidden';
   } else {
-    // Non-Android / Desktop / App mode -> hide black screen
+    // Non-Android / Desktop -> hide black screen
     forceInstallGate.classList.add('hidden-gate');
     document.body.style.overflow = '';
   }
@@ -918,17 +926,20 @@ window.addEventListener('beforeinstallprompt', (e) => {
   checkAndEnforceAppGate();
 });
 
-// App successfully installed
+// App successfully installed - DO NOT proceed in browser tab!
 window.addEventListener('appinstalled', () => {
   deferredInstallPrompt = null;
   if (btnInstallPWA) {
     btnInstallPWA.style.display = 'none';
   }
-  if (forceInstallGate) {
-    forceInstallGate.classList.add('hidden-gate');
-    document.body.style.overflow = '';
+  // Keep black screen active in browser tab and display launch reminder
+  if (gateInstalledNote) {
+    gateInstalledNote.classList.remove('hidden-section');
   }
-  showToast('🎉 Esports Scorer PRO installed!');
+  if (btnGateInstall) {
+    btnGateInstall.style.display = 'none';
+  }
+  showToast('App installed! Please open from your Home Screen.');
 });
 
 function triggerInstallPrompt() {
@@ -936,30 +947,33 @@ function triggerInstallPrompt() {
     deferredInstallPrompt.prompt();
     deferredInstallPrompt.userChoice.then((choiceResult) => {
       if (choiceResult.outcome === 'accepted') {
-        showToast('Installing app to home screen...');
+        if (gateInstalledNote) {
+          gateInstalledNote.classList.remove('hidden-section');
+        }
+        if (btnGateInstall) {
+          btnGateInstall.style.display = 'none';
+        }
+        showToast('Installing... Launch from Home Screen.');
       }
       deferredInstallPrompt = null;
     });
   } else {
-    showToast("Tap Chrome menu (⋮) -> 'Install App' or 'Add to Home screen'");
+    showToast("Tap Chrome menu (⋮) -> 'Install App'");
   }
 }
 
 // Mobile Non-Zoomable & Touch-Action Guards
 function initNonZoomableGuards() {
-  // Prevent iOS/Safari gesture pinch-zoom
   document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
   document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
   document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
 
-  // Prevent multi-touch pinch zoom
   document.addEventListener('touchmove', (e) => {
     if (e.touches.length > 1) {
       e.preventDefault();
     }
   }, { passive: false });
 
-  // Prevent rapid double-tap zoom while preserving button responsiveness
   let lastTouchEndTime = 0;
   document.addEventListener('touchend', (e) => {
     const currentTime = Date.now();

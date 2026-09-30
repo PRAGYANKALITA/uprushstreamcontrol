@@ -65,7 +65,7 @@ input, textarea, .col-team, .team-name-label {
 }
 
 /* ===================================================================
-   🛑 FULLSCREEN BLACK SCREEN (Android Browser Only)
+   FULLSCREEN BLACK SCREEN (Android Browser Only)
    =================================================================== */
 
 .force-install-gate {
@@ -143,6 +143,42 @@ input, textarea, .col-team, .team-name-label {
 .btn-gate-install:active {
   transform: scale(0.95);
   background: #e5e5e5;
+}
+
+.gate-installed-note {
+  font-size: 13px;
+  color: #a3a3a3;
+  line-height: 1.5;
+  background: #111111;
+  border: 1px solid #333333;
+  padding: 12px 14px;
+  border-radius: 8px;
+  margin-top: 12px;
+}
+
+.gate-installed-note strong {
+  color: #ffffff;
+}
+
+/* SVG Icon Helpers */
+.svg-icon {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.svg-btn-icon {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+.svg-inline-trophy {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 4px;
+  flex-shrink: 0;
 }
 
 /* ===================================================================

@@ -17,6 +17,17 @@
   <meta name="msapplication-TileColor" content="#000000">
   <meta name="msapplication-tap-highlight" content="no">
 
+  <!-- Twitter Card & Open Graph Meta -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="UPRUSH PRODUCTION CONTROLLER">
+  <meta name="twitter:description" content="Control OBS scenes, live scoreboard, and tournament standings all from one app.">
+  <meta name="twitter:image" content="icons/icon-512.png">
+  
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="UPRUSH PRODUCTION CONTROLLER">
+  <meta property="og:description" content="Control OBS scenes, live scoreboard, and tournament standings all from one app.">
+  <meta property="og:image" content="icons/icon-512.png">
+
   <!-- Icons & Web App Manifest -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
@@ -32,16 +43,22 @@
 </head>
 <body>
 
-  <!-- 🛑 FULLSCREEN BLACK SCREEN (Android Browser Only) -->
+  <!-- FULLSCREEN BLACK SCREEN (Android Browser Only) -->
   <div id="forceInstallGate" class="force-install-gate hidden-gate">
     <div class="gate-minimal-box">
       <img src="icons/icon.svg" alt="App Icon" class="gate-app-icon" width="96" height="96">
       <h1 class="gate-title">ESPORTS CONTROLLER</h1>
       <p class="gate-subtitle">PRO SCORER</p>
       
-      <button id="btnGateInstall" class="btn-gate-install">
-        <span>⚡ INSTALL NOW</span>
-      </button>
+      <div id="gateActionArea">
+        <button id="btnGateInstall" class="btn-gate-install">
+          <svg class="svg-btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          <span>INSTALL NOW</span>
+        </button>
+      </div>
+      <p id="gateInstalledNote" class="gate-installed-note hidden-section">
+        App installed! Please launch <strong>Scorer PRO</strong> from your Home Screen.
+      </p>
     </div>
   </div>
 
@@ -58,16 +75,23 @@
       <div class="header-actions">
         <!-- PWA Install Button (Dynamic) -->
         <button id="btnInstallPWA" class="btn-sm btn-install-app" title="Install App">
-          <span class="install-icon">📲</span>
+          <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           <span class="install-text">Install</span>
         </button>
-        <button id="btnOpenTeamsModal" class="btn-sm btn-outline-cyan" title="Setup 12 Teams">👥 Teams</button>
-        <button id="btnSettings" class="icon-btn" title="Settings">⚙️</button>
-        <button id="btnRefresh" class="icon-btn" title="Sync from Sheet">🔄</button>
+        <button id="btnOpenTeamsModal" class="btn-sm btn-outline-cyan" title="Setup 12 Teams">
+          <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Teams</span>
+        </button>
+        <button id="btnSettings" class="icon-btn" title="Settings">
+          <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        </button>
+        <button id="btnRefresh" class="icon-btn" title="Sync from Sheet">
+          <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+        </button>
       </div>
     </div>
 
-    <!-- 🔴 DYNAMIC LIVESTREAM BROADCAST CONTROLLER (Instant OBS Scene Switch) -->
+    <!-- DYNAMIC LIVESTREAM BROADCAST CONTROLLER (Instant OBS Scene Switch) -->
     <div class="livestream-controller-bar">
       <div class="livestream-status">
         <span class="live-pulse-dot"></span>
@@ -75,7 +99,10 @@
         <span class="live-current-scene" id="liveCurrentScene">OVERALL</span>
       </div>
       <div class="livestream-scene-buttons" id="livestreamSceneButtons">
-        <button class="scene-btn active" data-scene="Overall">🏆 Overall</button>
+        <button class="scene-btn active" data-scene="Overall">
+          <svg class="svg-inline-trophy" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7v2h10v-2h-2c-.55 0-1-.45-1-1v-2.34"></path><path d="M6 4h12v6a6 6 0 0 1-12 0V4Z"></path></svg>
+          <span>Overall</span>
+        </button>
         <button class="scene-btn" data-scene="Game 1">G1</button>
         <button class="scene-btn" data-scene="Game 2">G2</button>
         <button class="scene-btn" data-scene="Game 3">G3</button>
@@ -107,7 +134,10 @@
         <button class="tab-btn" data-tab="game4">GAME 4</button>
         <button class="tab-btn" data-tab="game5">GAME 5</button>
         <button class="tab-btn" data-tab="game6">GAME 6</button>
-        <button class="tab-btn tab-overall" data-tab="overall">🏆 OVERALL</button>
+        <button class="tab-btn tab-overall" data-tab="overall">
+          <svg class="svg-inline-trophy" viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7v2h10v-2h-2c-.55 0-1-.45-1-1v-2.34"></path><path d="M6 4h12v6a6 6 0 0 1-12 0V4Z"></path></svg>
+          <span>OVERALL</span>
+        </button>
       </div>
     </nav>
   </header>
@@ -120,7 +150,7 @@
       <div class="section-title-bar">
         <div class="active-game-info">
           <h2 id="activeGameTitle">GAME 1</h2>
-          <span class="rule-hint">1 Kill = 1 Pt | 1st: 12, 2nd: 9, 3rd: 8... | Auto-Saved ⚡</span>
+          <span class="rule-hint">1 Kill = 1 Pt | 1st: 12, 2nd: 9, 3rd: 8... | Auto-Saved</span>
         </div>
         <div class="game-actions">
           <button id="btnResetCurrentGame" class="btn-sm btn-outline-danger">Reset Game</button>
@@ -137,11 +167,14 @@
     <section id="overallSection" class="hidden-section">
       <div class="section-title-bar">
         <div class="active-game-info">
-          <h2>🏆 OVERALL TOURNAMENT STANDINGS</h2>
+          <h2>OVERALL TOURNAMENT STANDINGS</h2>
           <span class="rule-hint">Auto-calculated live across all games</span>
         </div>
         <div class="game-actions">
-          <button id="btnCopyStandings" class="btn-sm btn-primary">📋 Copy Text</button>
+          <button id="btnCopyStandings" class="btn-sm btn-primary">
+            <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Copy Text</span>
+          </button>
         </div>
       </div>
 
@@ -150,7 +183,9 @@
           <span class="col-rank">#</span>
           <span class="col-team">TEAM</span>
           <span class="col-m">M</span>
-          <span class="col-w">🏆</span>
+          <span class="col-w">
+            <svg class="svg-inline-trophy" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7v2h10v-2h-2c-.55 0-1-.45-1-1v-2.34"></path><path d="M6 4h12v6a6 6 0 0 1-12 0V4Z"></path></svg>
+          </span>
           <span class="col-k">KILLS</span>
           <span class="col-pts">PTS</span>
         </div>
@@ -165,12 +200,13 @@
   <!-- Clean Bottom Info & OBS Link Bar -->
   <div class="bottom-action-bar" id="bottomActionBar">
     <div class="save-status-info">
-      <span class="save-state-text" id="saveStateText">⚡ Instant Auto-Save Active</span>
+      <span class="save-state-text" id="saveStateText">Instant Auto-Save Active</span>
       <span class="save-time-text" id="saveTimeText">Google Sheets Connected</span>
     </div>
     <div class="bottom-buttons">
       <a href="index2.html" target="_blank" class="btn-secondary overlay-link-btn" title="Open OBS Broadcast Overlay">
-        📺 OBS Overlay
+        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+        <span>OBS Overlay</span>
       </a>
     </div>
   </div>
@@ -179,16 +215,20 @@
   <div class="modal-overlay" id="teamsModal">
     <div class="modal-sheet">
       <div class="modal-header">
-        <h3>👥 Initial 12 Teams Setup</h3>
+        <h3>
+          <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+          <span>Initial 12 Teams Setup</span>
+        </h3>
         <button class="modal-close" id="btnCloseTeamsModal">&times;</button>
       </div>
       <div class="modal-body">
         
         <div class="form-group">
-          <label>📋 Quick Paste All 12 Teams (1 per line):</label>
+          <label>Quick Paste All 12 Teams (1 per line):</label>
           <textarea id="bulkTeamsInput" rows="4" placeholder="TEAM SOUL&#10;GODLIKE ESPORTS&#10;BLIND ESPORTS&#10;ORANGUTAN&#10;..."></textarea>
           <button id="btnParseBulkTeams" class="btn-sm btn-secondary" style="margin-top: 4px;">
-            ⚡ Auto-Fill 12 Fields Below
+            <svg class="svg-icon" viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            <span>Auto-Fill 12 Fields Below</span>
           </button>
         </div>
 
@@ -202,7 +242,8 @@
       </div>
       <div class="modal-footer">
         <button id="btnSaveTeamNamesModal" class="btn-primary" style="width: 100%;">
-          ✅ Save & Sync 12 Teams to All Games
+          <svg class="svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          <span>Save & Sync 12 Teams to All Games</span>
         </button>
       </div>
     </div>
@@ -212,7 +253,10 @@
   <div class="modal-overlay" id="settingsModal">
     <div class="modal-sheet">
       <div class="modal-header">
-        <h3>⚙️ Tournament Configuration</h3>
+        <h3>
+          <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Tournament Configuration</span>
+        </h3>
         <button class="modal-close" id="btnCloseSettings">&times;</button>
       </div>
       <div class="modal-body">
@@ -223,10 +267,11 @@
           <p class="field-hint">Your deployed Google Apps Script API endpoint.</p>
         </div>
 
-        <div class="form-group" style="margin-top: 20px; border-top: 1px solid #2d3748; padding-top: 15px;">
-          <label style="color: #ef4444;">Danger Zone:</label>
+        <div class="form-group" style="margin-top: 20px; border-top: 1px solid #262626; padding-top: 15px;">
+          <label style="color: #a3a3a3;">Danger Zone:</label>
           <button id="btnResetAllGames" class="btn-danger" style="width: 100%;">
-            ⚠️ Reset All 6 Games to 0
+            <svg class="svg-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            <span>Reset All 6 Games to 0</span>
           </button>
         </div>
 
