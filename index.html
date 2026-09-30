@@ -2,8 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Esports Scorer & Livestream Controller</title>
+  
+  <!-- PWA & Mobile Web App Meta -->
+  <meta name="description" content="Real-time Mobile Scorer and Livestream Controller with instant Auto-Sync and OBS overlay.">
+  <meta name="theme-color" content="#0a0e17">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Scorer PRO">
+  <meta name="application-name" content="Scorer PRO">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="msapplication-TileColor" content="#0a0e17">
+  <meta name="msapplication-tap-highlight" content="no">
+
+  <!-- Icons & Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <link rel="mask-icon" href="icons/icon.svg" color="#00e5ff">
+
+  <!-- Styles & Fonts -->
   <link rel="stylesheet" href="scorer.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +43,11 @@
         </div>
       </div>
       <div class="header-actions">
+        <!-- PWA Install Button (Dynamic) -->
+        <button id="btnInstallPWA" class="btn-sm btn-install-app" title="Install App to Home Screen">
+          <span class="install-icon">📲</span>
+          <span class="install-text">App</span>
+        </button>
         <button id="btnOpenTeamsModal" class="btn-sm btn-outline-cyan" title="Setup 12 Teams">👥 Teams</button>
         <button id="btnSettings" class="icon-btn" title="Settings">⚙️</button>
         <button id="btnRefresh" class="icon-btn" title="Sync from Sheet">🔄</button>
@@ -130,7 +156,7 @@
       <span class="save-time-text" id="saveTimeText">Google Sheets Connected</span>
     </div>
     <div class="bottom-buttons">
-      <a href="index.html" target="_blank" class="btn-secondary overlay-link-btn" title="Open OBS Broadcast Overlay">
+      <a href="index2.html" target="_blank" class="btn-secondary overlay-link-btn" title="Open OBS Broadcast Overlay">
         📺 OBS Overlay
       </a>
     </div>
@@ -194,6 +220,45 @@
       </div>
       <div class="modal-footer">
         <button id="btnSaveConfig" class="btn-primary" style="width: 100%;">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: iOS / Mobile PWA Installation Guide -->
+  <div class="modal-overlay" id="pwaInstallModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>📲 Install Esports Controller App</h3>
+        <button class="modal-close" id="btnClosePwaModal">&times;</button>
+      </div>
+      <div class="modal-body pwa-instructions">
+        <div class="pwa-app-preview">
+          <img src="icons/icon.svg" alt="App Icon" class="pwa-preview-icon" width="64" height="64">
+          <div class="pwa-preview-info">
+            <h4>Esports Scorer PRO</h4>
+            <p>Full-screen native controller with instant offline loading.</p>
+          </div>
+        </div>
+
+        <div id="iosInstallSteps" class="install-steps">
+          <h5>📱 How to install on iPhone / iPad (Safari):</h5>
+          <ol>
+            <li>Tap the <strong>Share</strong> button <span class="ios-share-icon">⎋</span> in Safari's bottom toolbar.</li>
+            <li>Scroll down and tap <strong>"Add to Home Screen"</strong> <span class="ios-plus-icon">➕</span>.</li>
+            <li>Tap <strong>Add</strong> at the top right to install the full-screen app!</li>
+          </ol>
+        </div>
+
+        <div id="androidInstallSteps" class="install-steps hidden-section">
+          <h5>📱 Install on Android (Chrome):</h5>
+          <p>Tap the button below or tap the browser menu (⋮) and select <strong>"Install App"</strong> or <strong>"Add to Home Screen"</strong>.</p>
+          <button id="btnTriggerAndroidInstall" class="btn-primary" style="width: 100%; margin-top: 10px;">
+            ⚡ Install App Now
+          </button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="btnDismissPwaModal" class="btn-secondary" style="width: 100%;">Got it!</button>
       </div>
     </div>
   </div>

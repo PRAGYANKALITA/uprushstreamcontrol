@@ -1,7 +1,7 @@
 /**
  * ===================================================================
  * ESPORTS SCORER & LIVESTREAM CONTROLLER - JAVASCRIPT ENGINE
- * Instant Auto-Sync, Official Placement Points & Drag Reordering
+ * PWA Offline Engine, Non-Zoomable Touch Guards, Instant Auto-Sync & Drag Reordering
  * ===================================================================
  */
 
@@ -139,6 +139,17 @@ const btnParseBulkTeams = document.getElementById('btnParseBulkTeams');
 const teamNamesEditor = document.getElementById('teamNamesEditor');
 const btnSaveTeamNamesModal = document.getElementById('btnSaveTeamNamesModal');
 
+// PWA Elements
+const btnInstallPWA = document.getElementById('btnInstallPWA');
+const pwaInstallModal = document.getElementById('pwaInstallModal');
+const btnClosePwaModal = document.getElementById('btnClosePwaModal');
+const btnDismissPwaModal = document.getElementById('btnDismissPwaModal');
+const iosInstallSteps = document.getElementById('iosInstallSteps');
+const androidInstallSteps = document.getElementById('androidInstallSteps');
+const btnTriggerAndroidInstall = document.getElementById('btnTriggerAndroidInstall');
+
+let deferredInstallPrompt = null;
+
 // ==========================================
 // RENDER & UI CONTROLS
 // ==========================================
@@ -211,12 +222,12 @@ function renderGameScoring() {
         <div class="team-card-controls">
           <!-- Kills Stepper -->
           <div class="kill-control-group">
-            <button class="kill-btn kill-minus" onclick="updateKill(${index}, -1)">−</button>
+            <button class="kill-btn kill-minus" onclick="updateKill(${index}, -1)" aria-label="Decrease kills">−</button>
             <div class="kill-count-box">
               <span class="kill-val">${kills}</span>
               <span class="kill-label">Kills</span>
             </div>
-            <button class="kill-btn kill-plus" onclick="updateKill(${index}, 1)">+</button>
+            <button class="kill-btn kill-plus" onclick="updateKill(${index}, 1)" aria-label="Increase kills">+</button>
           </div>
 
           <!-- Elimination Toggle Button -->
@@ -281,7 +292,6 @@ function calculateOverallStandings() {
   for (let g = 1; g <= TOTAL_GAMES; g++) {
     const gameList = state.games[`game${g}`] || [];
     
-    // Only count games that have actually started/been played
     const gamePlayed = gameList.some(t => (t.kills > 0) || t.isEliminated || t.isBooyah);
     if (!gamePlayed) continue;
 
@@ -551,7 +561,7 @@ window.updateKill = function(teamIndex, delta) {
 
 function triggerHaptic() {
   if (navigator.vibrate) {
-    try { navigator.vibrate(15); } catch (e) {}
+    try { navigator.vibrate(12); } catch (e) {}
   }
 }
 
@@ -845,6 +855,118 @@ function copyStandingsToClipboard() {
 }
 
 // ==========================================
+// 📲 PWA INSTALLATION ENGINE & GESTURE GUARDS
+// ==========================================
+
+// Register Service Worker for Offline & Fast App Launch
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then((reg) => {
+        console.log('Service Worker Registered successfully:', reg.scope);
+      })
+      .catch((err) => {
+        console.log('Service Worker registration failed:', err);
+      });
+  });
+}
+
+// Capture Android/Chrome beforeinstallprompt
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (btnInstallPWA) {
+    btnInstallPWA.style.display = 'flex';
+  }
+  if (androidInstallSteps) {
+    androidInstallSteps.classList.remove('hidden-section');
+  }
+  if (iosInstallSteps) {
+    iosInstallSteps.classList.add('hidden-section');
+  }
+});
+
+// App successfully installed
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  if (btnInstallPWA) {
+    btnInstallPWA.style.display = 'none';
+  }
+  showToast('🎉 Esports Scorer PRO installed as App!');
+});
+
+// Detect iOS device
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+}
+
+function isStandalone() {
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+
+function openPwaInstallModal() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        showToast('App installing to home screen...');
+      }
+      deferredInstallPrompt = null;
+    });
+    return;
+  }
+
+  // If already installed or on iOS/Safari, show helper modal
+  if (isIOS()) {
+    if (iosInstallSteps) iosInstallSteps.classList.remove('hidden-section');
+    if (androidInstallSteps) androidInstallSteps.classList.add('hidden-section');
+  } else {
+    if (iosInstallSteps) iosInstallSteps.classList.add('hidden-section');
+    if (androidInstallSteps) androidInstallSteps.classList.remove('hidden-section');
+  }
+
+  if (pwaInstallModal) {
+    pwaInstallModal.classList.add('active');
+  }
+}
+
+function closePwaInstallModal() {
+  if (pwaInstallModal) {
+    pwaInstallModal.classList.remove('active');
+  }
+}
+
+// Mobile Non-Zoomable & Touch-Action Guards
+function initNonZoomableGuards() {
+  // Prevent iOS Safari gesture pinch-zoom
+  document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('gesturechange', (e) => e.preventDefault(), { passive: false });
+  document.addEventListener('gestureend', (e) => e.preventDefault(), { passive: false });
+
+  // Prevent multi-touch pinch zoom
+  document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1) {
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  // Prevent rapid double-tap zoom while preserving button responsiveness
+  let lastTouchEndTime = 0;
+  document.addEventListener('touchend', (e) => {
+    const currentTime = Date.now();
+    if (currentTime - lastTouchEndTime <= 300) {
+      const tag = e.target.tagName.toLowerCase();
+      if (tag !== 'input' && tag !== 'textarea') {
+        e.preventDefault();
+      }
+    }
+    lastTouchEndTime = currentTime;
+  }, { passive: false });
+}
+
+initNonZoomableGuards();
+
+// ==========================================
 // UTILITY & INITIALIZATION
 // ==========================================
 
@@ -853,7 +975,7 @@ function showToast(msg) {
   toastNotification.classList.add('show');
   setTimeout(() => {
     toastNotification.classList.remove('show');
-  }, 2800);
+  }, 2500);
 }
 
 function escapeHtml(str) {
@@ -883,6 +1005,26 @@ livestreamSceneButtons.addEventListener('click', (e) => {
   setBroadcastScene(btn.dataset.scene);
 });
 
+if (btnInstallPWA) {
+  btnInstallPWA.addEventListener('click', openPwaInstallModal);
+}
+if (btnClosePwaModal) {
+  btnClosePwaModal.addEventListener('click', closePwaInstallModal);
+}
+if (btnDismissPwaModal) {
+  btnDismissPwaModal.addEventListener('click', closePwaInstallModal);
+}
+if (btnTriggerAndroidInstall) {
+  btnTriggerAndroidInstall.addEventListener('click', () => {
+    closePwaInstallModal();
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+    } else {
+      showToast("Tap Chrome's (⋮) menu -> Install App");
+    }
+  });
+}
+
 btnOpenTeamsModal.addEventListener('click', openTeamsModal);
 btnCloseTeamsModal.addEventListener('click', closeTeamsModal);
 btnParseBulkTeams.addEventListener('click', parseBulkTeams);
@@ -905,11 +1047,18 @@ btnSaveConfig.addEventListener('click', () => {
 });
 
 // Close modals on click outside
-[teamsModal, settingsModal].forEach(modal => {
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) modal.classList.remove('active');
-  });
+[teamsModal, settingsModal, pwaInstallModal].forEach(modal => {
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('active');
+    });
+  }
 });
+
+// Hide Install button if already running in standalone PWA mode
+if (isStandalone() && btnInstallPWA) {
+  btnInstallPWA.style.display = 'none';
+}
 
 // Instant 0ms Initial Render
 renderUI();
