@@ -1,0 +1,3 @@
+kills - 1 point
+
+points should calculate automatically based on kills

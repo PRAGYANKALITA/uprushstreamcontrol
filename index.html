@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Esports Scorer & Livestream Controller</title>
+  <link rel="stylesheet" href="scorer.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <div class="header-main">
+      <div class="brand">
+        <span class="brand-badge">PRO</span>
+        <div class="brand-text">
+          <h1>ESPORTS CONTROLLER</h1>
+          <span class="brand-sub">Auto-Sync Scoreboard</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="btnOpenTeamsModal" class="btn-sm btn-outline-cyan" title="Setup 12 Teams">👥 Teams</button>
+        <button id="btnSettings" class="icon-btn" title="Settings">⚙️</button>
+        <button id="btnRefresh" class="icon-btn" title="Sync from Sheet">🔄</button>
+      </div>
+    </div>
+
+    <!-- 🔴 DYNAMIC LIVESTREAM BROADCAST CONTROLLER (Instant OBS Scene Switch) -->
+    <div class="livestream-controller-bar">
+      <div class="livestream-status">
+        <span class="live-pulse-dot"></span>
+        <span class="live-tag">OBS BROADCASTING:</span>
+        <span class="live-current-scene" id="liveCurrentScene">OVERALL</span>
+      </div>
+      <div class="livestream-scene-buttons" id="livestreamSceneButtons">
+        <button class="scene-btn active" data-scene="Overall">🏆 Overall</button>
+        <button class="scene-btn" data-scene="Game 1">G1</button>
+        <button class="scene-btn" data-scene="Game 2">G2</button>
+        <button class="scene-btn" data-scene="Game 3">G3</button>
+        <button class="scene-btn" data-scene="Game 4">G4</button>
+        <button class="scene-btn" data-scene="Game 5">G5</button>
+        <button class="scene-btn" data-scene="Game 6">G6</button>
+      </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-indicator">
+        <span class="status-dot synced" id="statusDot"></span>
+        <span class="status-label" id="statusLabel">Auto-Saved</span>
+      </div>
+      <div class="quick-stats" id="quickStats">
+        <span id="statGameTotalKills">Total Kills: 0</span>
+        <span class="divider">•</span>
+        <span id="statGameBooyah">Booyah: Pending</span>
+      </div>
+    </div>
+
+    <!-- Scrollable Scorer Tabs -->
+    <nav class="game-tabs-nav">
+      <div class="tabs-scroll-container" id="tabsContainer">
+        <button class="tab-btn active" data-tab="game1">GAME 1</button>
+        <button class="tab-btn" data-tab="game2">GAME 2</button>
+        <button class="tab-btn" data-tab="game3">GAME 3</button>
+        <button class="tab-btn" data-tab="game4">GAME 4</button>
+        <button class="tab-btn" data-tab="game5">GAME 5</button>
+        <button class="tab-btn" data-tab="game6">GAME 6</button>
+        <button class="tab-btn tab-overall" data-tab="overall">🏆 OVERALL</button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    
+    <!-- Game Scoring View (Game 1 - 6) -->
+    <section id="gameScoringSection" class="active-section">
+      <div class="section-title-bar">
+        <div class="active-game-info">
+          <h2 id="activeGameTitle">GAME 1</h2>
+          <span class="rule-hint">1 Kill = 1 Pt | 1st: 12, 2nd: 9, 3rd: 8... | Auto-Saved ⚡</span>
+        </div>
+        <div class="game-actions">
+          <button id="btnResetCurrentGame" class="btn-sm btn-outline-danger">Reset Game</button>
+        </div>
+      </div>
+
+      <!-- Teams Card List for Fast Mobile Input -->
+      <div class="team-cards-list" id="teamCardsList">
+        <!-- Rendered dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- Overall Standings View -->
+    <section id="overallSection" class="hidden-section">
+      <div class="section-title-bar">
+        <div class="active-game-info">
+          <h2>🏆 OVERALL TOURNAMENT STANDINGS</h2>
+          <span class="rule-hint">Auto-calculated live across all games</span>
+        </div>
+        <div class="game-actions">
+          <button id="btnCopyStandings" class="btn-sm btn-primary">📋 Copy Text</button>
+        </div>
+      </div>
+
+      <div class="overall-table-card">
+        <div class="overall-table-header">
+          <span class="col-rank">#</span>
+          <span class="col-team">TEAM</span>
+          <span class="col-m">M</span>
+          <span class="col-w">🏆</span>
+          <span class="col-k">KILLS</span>
+          <span class="col-pts">PTS</span>
+        </div>
+        <div class="overall-table-body" id="overallTableBody">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Clean Bottom Info & OBS Link Bar -->
+  <div class="bottom-action-bar" id="bottomActionBar">
+    <div class="save-status-info">
+      <span class="save-state-text" id="saveStateText">⚡ Instant Auto-Save Active</span>
+      <span class="save-time-text" id="saveTimeText">Google Sheets Connected</span>
+    </div>
+    <div class="bottom-buttons">
+      <a href="index.html" target="_blank" class="btn-secondary overlay-link-btn" title="Open OBS Broadcast Overlay">
+        📺 OBS Overlay
+      </a>
+    </div>
+  </div>
+
+  <!-- MODAL: SETUP 12 TEAMS (INITIAL & BULK PASTE) -->
+  <div class="modal-overlay" id="teamsModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>👥 Initial 12 Teams Setup</h3>
+        <button class="modal-close" id="btnCloseTeamsModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label>📋 Quick Paste All 12 Teams (1 per line):</label>
+          <textarea id="bulkTeamsInput" rows="4" placeholder="TEAM SOUL&#10;GODLIKE ESPORTS&#10;BLIND ESPORTS&#10;ORANGUTAN&#10;..."></textarea>
+          <button id="btnParseBulkTeams" class="btn-sm btn-secondary" style="margin-top: 4px;">
+            ⚡ Auto-Fill 12 Fields Below
+          </button>
+        </div>
+
+        <div class="form-group">
+          <label>Edit 12 Individual Team Names:</label>
+          <div class="team-names-editor" id="teamNamesEditor">
+            <!-- 12 input fields dynamically generated -->
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button id="btnSaveTeamNamesModal" class="btn-primary" style="width: 100%;">
+          ✅ Save & Sync 12 Teams to All Games
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SETTINGS -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <h3>⚙️ Tournament Configuration</h3>
+        <button class="modal-close" id="btnCloseSettings">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label for="scriptUrlInput">Google Apps Script Web App URL:</label>
+          <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+          <p class="field-hint">Your deployed Google Apps Script API endpoint.</p>
+        </div>
+
+        <div class="form-group" style="margin-top: 20px; border-top: 1px solid #2d3748; padding-top: 15px;">
+          <label style="color: #ef4444;">Danger Zone:</label>
+          <button id="btnResetAllGames" class="btn-danger" style="width: 100%;">
+            ⚠️ Reset All 6 Games to 0
+          </button>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button id="btnSaveConfig" class="btn-primary" style="width: 100%;">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="toast"></div>
+
+  <script src="scorer.js"></script>
+</body>
+</html>
