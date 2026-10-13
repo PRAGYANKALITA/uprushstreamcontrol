@@ -21,6 +21,7 @@ const CONFIG = {
   MAX_GAMES: 6,
   OVERALL_SHEET: "Overall",
   LEADERBOARD_SHEET: "Leaderboard",
+  KILLS_BOOYAH_SHEET: "Kills & Booyah",
   TEAMS_SHEET: "Teams",
   DEFAULT_TEAMS: [
     "TEAM SOUL",
@@ -79,9 +80,9 @@ function setupTournament() {
     }
     gSheet.clear();
 
-    const headers = ["Place", "Team Name", "Kills", "Place Pts", "Kill Pts", "Total Pts", "Booyah"];
-    gSheet.getRange(1, 1, 1, 7).setValues([headers]);
-    formatHeader(gSheet.getRange(1, 1, 1, 7), "#0f172a", "#f59e0b");
+    const headers = ["Place", "Team Name", "Kills", "Place Pts", "Kill Pts", "Total Pts", "Booyah", "Eliminated"];
+    gSheet.getRange(1, 1, 1, 8).setValues([headers]);
+    formatHeader(gSheet.getRange(1, 1, 1, 8), "#0f172a", "#f59e0b");
 
     const gameRows = [];
     for (let i = 0; i < CONFIG.TOTAL_TEAMS; i++) {
@@ -93,14 +94,15 @@ function setupTournament() {
         0, // Place Pts (0 initially until elimination/win)
         `=C${i + 2} * ${CONFIG.KILL_POINTS}`,
         `=D${i + 2} + E${i + 2}`,
-        0  // Booyah
+        0, // Booyah
+        0  // Eliminated (0 = Alive, 1 = Defeated)
       ]);
     }
-    gSheet.getRange(2, 1, CONFIG.TOTAL_TEAMS, 7).setValues(gameRows);
+    gSheet.getRange(2, 1, CONFIG.TOTAL_TEAMS, 8).setValues(gameRows);
 
     gSheet.getRange(2, 1, CONFIG.TOTAL_TEAMS, 1).setHorizontalAlignment("center").setFontWeight("bold");
     gSheet.getRange(2, 2, CONFIG.TOTAL_TEAMS, 1).setHorizontalAlignment("left").setFontWeight("bold");
-    gSheet.getRange(2, 3, CONFIG.TOTAL_TEAMS, 5).setHorizontalAlignment("center");
+    gSheet.getRange(2, 3, CONFIG.TOTAL_TEAMS, 6).setHorizontalAlignment("center");
     
     gSheet.setColumnWidth(1, 80);
     gSheet.setColumnWidth(2, 200);
@@ -109,6 +111,7 @@ function setupTournament() {
     gSheet.setColumnWidth(5, 90);
     gSheet.setColumnWidth(6, 100);
     gSheet.setColumnWidth(7, 80);
+    gSheet.setColumnWidth(8, 80);
   }
 
   // 3. Setup Overall Leaderboard Sheet
@@ -144,6 +147,21 @@ function setupTournament() {
   legacySheet.setColumnWidth(3, 90);
   legacySheet.setColumnWidth(4, 90);
   legacySheet.setColumnWidth(5, 110);
+
+  // 5. Setup "Kills & Booyah" Sheet (Only Kills and Booyahs - No Rank Points)
+  let kbSheet = ss.getSheetByName(CONFIG.KILLS_BOOYAH_SHEET);
+  if (!kbSheet) {
+    kbSheet = ss.insertSheet(CONFIG.KILLS_BOOYAH_SHEET, 2);
+  }
+  kbSheet.clear();
+  const kbHeaders = ["Rank", "Team Name", "Matches", "🏆 Booyah", "Total Kills"];
+  kbSheet.getRange(1, 1, 1, 5).setValues([kbHeaders]);
+  formatHeader(kbSheet.getRange(1, 1, 1, 5), "#091e3a", "#38bdf8");
+  kbSheet.setColumnWidth(1, 80);
+  kbSheet.setColumnWidth(2, 220);
+  kbSheet.setColumnWidth(3, 90);
+  kbSheet.setColumnWidth(4, 100);
+  kbSheet.setColumnWidth(5, 110);
 
   setActiveView("Overall");
   recalculateOverall();
@@ -244,7 +262,6 @@ function recalculateOverall() {
     return a.name.localeCompare(b.name);
   });
 
-  // Batch update Overall Sheet in 1 call
   const overallRows = [];
   const legacyRows = [];
   for (let i = 0; i < sorted.length; i++) {
@@ -259,6 +276,24 @@ function recalculateOverall() {
 
   if (legacySheet && legacyRows.length > 0) {
     legacySheet.getRange(2, 1, legacyRows.length, 5).setValues(legacyRows);
+  }
+
+  // Batch update Kills & Booyah Sheet (NO Rank Points)
+  const kbSheet = ss.getSheetByName(CONFIG.KILLS_BOOYAH_SHEET);
+  if (kbSheet) {
+    const kbSorted = Object.values(teamStats).sort((a, b) => {
+      if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+      if (b.kills !== a.kills) return b.kills - a.kills;
+      return a.name.localeCompare(b.name);
+    });
+    const kbRows = [];
+    for (let i = 0; i < kbSorted.length; i++) {
+      const t = kbSorted[i];
+      kbRows.push([`#${i + 1}`, t.name, t.matches, t.booyah, t.kills]);
+    }
+    if (kbRows.length > 0) {
+      kbSheet.getRange(2, 1, kbRows.length, 5).setValues(kbRows);
+    }
   }
 }
 
@@ -312,13 +347,15 @@ function doGet(e) {
     for (let g = 1; g <= CONFIG.MAX_GAMES; g++) {
       const gSheet = ss.getSheetByName(`Game ${g}`);
       if (gSheet) {
-        const raw = gSheet.getRange(2, 1, CONFIG.TOTAL_TEAMS, 7).getValues();
+        const numCols = Math.max(7, gSheet.getLastColumn());
+        const raw = gSheet.getRange(2, 1, CONFIG.TOTAL_TEAMS, numCols).getValues();
         gamesData[`Game ${g}`] = raw.map((row, i) => {
           const rankNum = parseInt(String(row[0] || "").replace("#", ""), 10) || (i + 1);
           const kills = Number(row[2]) || 0;
           const placePts = Number(row[3]) || getPlacementPoints(rankNum);
           const points = Number(row[5]) || (placePts + (kills * CONFIG.KILL_POINTS));
           const isBooyah = Number(row[6]) || 0;
+          const isElim = numCols >= 8 ? (Number(row[7]) === 1 || String(row[7]).toLowerCase() === "true" || String(row[7]).toLowerCase() === "eliminated") : false;
           return {
             rank: `#${rankNum}`,
             rankNum: rankNum,
@@ -326,7 +363,8 @@ function doGet(e) {
             kills: kills,
             placePts: placePts,
             booyah: isBooyah,
-            points: points
+            points: points,
+            isEliminated: isElim
           };
         });
       }
@@ -336,27 +374,78 @@ function doGet(e) {
     const rawTeams = tSheet ? tSheet.getRange(2, 2, CONFIG.TOTAL_TEAMS, 1).getValues() : [];
     const masterTeams = rawTeams.map(r => r[0]).filter(Boolean);
 
+    // Kills & Booyah Leaderboard (NO Rank Points)
+    const sortOrder = (params.sort || "booyah").toLowerCase();
+    const isKillsOnly = action === "get_kills_booyah" || action === "get_kb" || params.mode === "kills" || params.type === "kills";
+
+    const kbOverallTeams = [...overallTeams].map(t => ({
+      name: t.name,
+      matches: t.matches,
+      kills: t.kills,
+      booyah: t.booyah,
+      isEliminated: false
+    })).sort((a, b) => {
+      if (sortOrder === "kills") {
+        if (b.kills !== a.kills) return b.kills - a.kills;
+        if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+      } else {
+        // Default: Booyah first -> Kills tiebreaker -> Name
+        if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+        if (b.kills !== a.kills) return b.kills - a.kills;
+      }
+      return a.name.localeCompare(b.name);
+    });
+    kbOverallTeams.forEach((t, i) => { t.rank = `#${i + 1}`; t.rankNum = i + 1; });
+
     // Dynamic Display for OBS Overlay
     let displayTeams = overallTeams;
-    if (currentActiveView.startsWith("Game")) {
-      const gameArray = gamesData[currentActiveView] || [];
-      if (gameArray.length > 0) {
-        displayTeams = [...gameArray].sort((a, b) => {
-          if (b.points !== a.points) return b.points - a.points;
-          if (b.placePts !== a.placePts) return b.placePts - a.placePts;
-          if (b.kills !== a.kills) return b.kills - a.kills;
-          if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+    if (isKillsOnly) {
+      if (currentActiveView.startsWith("Game")) {
+        const gameArray = gamesData[currentActiveView] || [];
+        displayTeams = [...gameArray].map(t => ({
+          name: t.name,
+          kills: t.kills,
+          booyah: t.booyah,
+          isEliminated: !!t.isEliminated
+        })).sort((a, b) => {
+          if (sortOrder === "kills") {
+            if (b.kills !== a.kills) return b.kills - a.kills;
+            if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+          } else {
+            if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+            if (b.kills !== a.kills) return b.kills - a.kills;
+          }
           return a.name.localeCompare(b.name);
         });
-        displayTeams.forEach((t, i) => { t.rank = `#${i + 1}`; });
+        displayTeams.forEach((t, i) => { t.rank = `#${i + 1}`; t.rankNum = i + 1; });
+      } else {
+        displayTeams = kbOverallTeams;
+      }
+    } else {
+      if (currentActiveView.startsWith("Game")) {
+        const gameArray = gamesData[currentActiveView] || [];
+        if (gameArray.length > 0) {
+          displayTeams = [...gameArray].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.placePts !== a.placePts) return b.placePts - a.placePts;
+            if (b.kills !== a.kills) return b.kills - a.kills;
+            if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+            return a.name.localeCompare(b.name);
+          });
+          displayTeams.forEach((t, i) => { t.rank = `#${i + 1}`; });
+        }
       }
     }
+
+    const viewPrefix = isKillsOnly ? "KILLS & BOOYAH" : "OVERALL";
+    const viewTitleText = currentActiveView === "Overall" ? `${viewPrefix} STANDINGS` : `${currentActiveView.toUpperCase()} STANDINGS`;
 
     return jsonResponse({
       status: "success",
       timestamp: new Date().toISOString(),
       activeView: currentActiveView,
-      viewTitle: currentActiveView === "Overall" ? "OVERALL STANDINGS" : `${currentActiveView.toUpperCase()} STANDINGS`,
+      viewTitle: viewTitleText,
+      mode: isKillsOnly ? "kills" : "points",
       config: {
         killPoints: CONFIG.KILL_POINTS,
         placementPoints: CONFIG.PLACEMENT_POINTS,
@@ -366,6 +455,7 @@ function doGet(e) {
       teams: displayTeams,
       data: displayTeams,
       overall: overallTeams,
+      killsBooyah: kbOverallTeams,
       games: gamesData,
       masterTeams: masterTeams
     });
@@ -440,6 +530,8 @@ function handleSaveGame(payload) {
     const kills = Number(t.kills) || 0;
     const totalPoints = placePts + (kills * CONFIG.KILL_POINTS);
 
+    const isElim = (t.isEliminated === 1 || t.isEliminated === true || t.eliminated === 1 || t.eliminated === true) ? 1 : 0;
+
     batchRows.push([
       `#${rankNum}`,
       name,
@@ -447,12 +539,20 @@ function handleSaveGame(payload) {
       placePts,
       kills * CONFIG.KILL_POINTS,
       totalPoints,
-      isBooyah
+      isBooyah,
+      isElim
     ]);
   }
 
+  // Ensure header for column 8 exists
+  if (gSheet.getLastColumn() < 8) {
+    gSheet.getRange(1, 8).setValue("Eliminated");
+    formatHeader(gSheet.getRange(1, 8), "#0f172a", "#ef4444");
+    gSheet.setColumnWidth(8, 80);
+  }
+
   // 1 Single Batch Write (Ultra fast!)
-  gSheet.getRange(2, 1, CONFIG.TOTAL_TEAMS, 7).setValues(batchRows);
+  gSheet.getRange(2, 1, CONFIG.TOTAL_TEAMS, 8).setValues(batchRows);
 
   // Recalculate Overall in memory
   recalculateOverall();

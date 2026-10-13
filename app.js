@@ -8,6 +8,9 @@ const POLL_INTERVAL_MS = 2500; // 2.5s server polling
 const urlParams = new URLSearchParams(window.location.search);
 const selectedGameParam = urlParams.get('game');
 const customUrlParam = urlParams.get('url');
+const modeParam = (urlParams.get('mode') || urlParams.get('type') || 'points').toLowerCase();
+const isKillsOnlyMode = modeParam === 'kills' || modeParam === 'kb' || modeParam === 'booyah';
+const sortParam = (urlParams.get('sort') || 'booyah').toLowerCase();
 
 const SCRIPT_URL = customUrlParam || DEFAULT_SCRIPT_URL;
 
@@ -32,18 +35,18 @@ function getPlacePts(rankNum) {
 }
 
 const DEFAULT_TEAMS = [
-  { rank: "#1", name: "TEAM SOUL", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#2", name: "GODLIKE ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#3", name: "BLIND ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#4", name: "ORANGUTAN", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#5", name: "TEAM XSPARK", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#6", name: "REVENANT ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#7", name: "MEDAL ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#8", name: "GLOBAL ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#9", name: "GLADIATORS", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#10", name: "HYDRA OFFICIAL", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#11", name: "TEAM 8BIT", kills: 0, booyah: 0, points: 0, placePts: 0 },
-  { rank: "#12", name: "INSANE ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0 }
+  { rank: "#1", name: "TEAM SOUL", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#2", name: "GODLIKE ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#3", name: "BLIND ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#4", name: "ORANGUTAN", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#5", name: "TEAM XSPARK", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#6", name: "REVENANT ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#7", name: "MEDAL ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#8", name: "GLOBAL ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#9", name: "GLADIATORS", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#10", name: "HYDRA OFFICIAL", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#11", name: "TEAM 8BIT", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false },
+  { rank: "#12", name: "INSANE ESPORTS", kills: 0, booyah: 0, points: 0, placePts: 0, isDefeated: false }
 ];
 
 const container = document.getElementById('leaderboardContainer');
@@ -72,7 +75,9 @@ function render(teams) {
   const top12 = displayList.slice(0, 12);
 
   // Guard: If signature hasn't changed, return immediately without touching DOM
-  const newSignature = top12.map((t, idx) => `${idx + 1}:${t.name}:${t.kills}:${t.points}:${t.placePts}`).join('|');
+  const newSignature = isKillsOnlyMode
+    ? top12.map((t, idx) => `${idx + 1}:${t.name}:${t.kills}:${t.booyah}:${t.isDefeated ? 1 : 0}`).join('|')
+    : top12.map((t, idx) => `${idx + 1}:${t.name}:${t.kills}:${t.points}:${t.placePts}:${t.isDefeated ? 1 : 0}`).join('|');
   if (newSignature === lastRenderedSignature && !isInitialRender) {
     return;
   }
@@ -95,6 +100,7 @@ function render(teams) {
     const rankNum = index + 1;
     const rankClass = rankNum <= 3 ? `rank-${rankNum}` : '';
     const formattedRank = `#${rankNum}`;
+    const defeatedClass = team.isDefeated ? 'defeated is-eliminated' : '';
 
     let row = existingRowMap.get(team.name);
     if (!row) {
@@ -104,11 +110,19 @@ function render(teams) {
 
     // Stat changes for animation pop
     const prev = previousTeamStats[team.name];
-    const hasStatChanged = prev && (prev.points !== team.points || prev.kills !== team.kills);
+    const hasStatChanged = isKillsOnlyMode
+      ? prev && (prev.booyah !== team.booyah || prev.kills !== team.kills)
+      : prev && (prev.points !== team.points || prev.kills !== team.kills);
     const popClass = hasStatChanged ? 'stat-pop' : '';
-    previousTeamStats[team.name] = { points: team.points, kills: team.kills };
+    previousTeamStats[team.name] = isKillsOnlyMode
+      ? { booyah: team.booyah, kills: team.kills }
+      : { points: team.points, kills: team.kills };
 
-    row.className = `leaderboard-row ${rankClass}`;
+    const secondStatCol = isKillsOnlyMode
+      ? `<div class="row-stat-booyah ${popClass}">${team.booyah ?? 0}</div>`
+      : `<div class="row-stat-points ${popClass}">${team.points ?? 0}</div>`;
+
+    row.className = `leaderboard-row ${rankClass} ${defeatedClass}`.trim();
     row.setAttribute('data-team', team.name);
     row.innerHTML = `
       <div class="row-left-section">
@@ -117,7 +131,7 @@ function render(teams) {
       </div>
       <div class="row-right-section">
         <div class="row-stat-kills ${popClass}">${team.kills ?? 0}</div>
-        <div class="row-stat-points ${popClass}">${team.points ?? 0}</div>
+        ${secondStatCol}
       </div>
     `;
 
@@ -205,7 +219,10 @@ async function fetchData() {
     if (selectedGameParam && selectedGameParam !== 'overall' && selectedGameParam !== 'all') {
       fetchEndpoint += (fetchEndpoint.includes('?') ? '&' : '?') + `action=get_game&game=${selectedGameParam}&_t=${Date.now()}`;
     } else {
-      fetchEndpoint += (fetchEndpoint.includes('?') ? '&' : '?') + `action=get_all&_t=${Date.now()}`;
+      fetchEndpoint += (fetchEndpoint.includes('?') ? '&' : '?') + `action=${isKillsOnlyMode ? 'get_kills_booyah' : 'get_all'}&_t=${Date.now()}`;
+    }
+    if (isKillsOnlyMode) {
+      fetchEndpoint += `&mode=kills`;
     }
 
     const res = await fetch(fetchEndpoint, { cache: 'no-store' });
@@ -215,6 +232,8 @@ async function fetchData() {
     let rawTeams = [];
     if (Array.isArray(data)) {
       rawTeams = data;
+    } else if (isKillsOnlyMode && data.killsBooyah && Array.isArray(data.killsBooyah)) {
+      rawTeams = data.killsBooyah;
     } else if (data.teams && Array.isArray(data.teams)) {
       rawTeams = data.teams;
     } else if (data.overall && Array.isArray(data.overall)) {
@@ -227,6 +246,9 @@ async function fetchData() {
       return;
     }
 
+    const defeatedParam = (urlParams.get('defeated') || urlParams.get('eliminated') || '').toLowerCase();
+    const defeatedList = defeatedParam ? defeatedParam.split(',').map(s => s.trim()) : [];
+
     const processed = rawTeams.map((item, idx) => {
       const name = String(item.name || item.team || item.Team || item.TeamName || `Team ${idx + 1}`).trim();
       const kills = parseInt(item.kills || item.Kills || 0, 10) || 0;
@@ -234,18 +256,56 @@ async function fetchData() {
       const rankNum = item.rankNum || parseInt(String(item.rank || "").replace("#", ""), 10) || (idx + 1);
       const placePts = item.placePts !== undefined ? Number(item.placePts) : getPlacePts(rankNum);
 
+      let isDefeated = Boolean(
+        item.isEliminated === true || item.isEliminated === 1 || item.isEliminated === '1' || item.isEliminated === 'true' ||
+        item.eliminated === true || item.eliminated === 1 || item.eliminated === '1' || item.eliminated === 'true' ||
+        item.defeated === true || item.defeated === 1 || item.defeated === '1' || item.defeated === 'true' ||
+        item.isAlive === false || item.isAlive === 0 || item.isAlive === '0' || item.isAlive === 'false' ||
+        item.alive === false || item.alive === 0 || item.alive === '0' || item.alive === 'false' ||
+        String(item.status || '').toLowerCase() === 'eliminated' ||
+        String(item.status || '').toLowerCase() === 'defeated' ||
+        String(item.status || '').toLowerCase() === 'dead'
+      );
+
+      if (defeatedList.length > 0) {
+        if (defeatedList.includes(String(idx + 1)) || defeatedList.includes(String(rankNum)) || defeatedList.includes(name.toLowerCase())) {
+          isDefeated = true;
+        }
+      }
+
       let points = item.points !== undefined ? Number(item.points) : (placePts + kills);
-      return { name, kills, booyah, points, placePts, initialIndex: idx };
+      return { name, kills, booyah, points, placePts, isDefeated, initialIndex: idx };
     });
 
-    // Deterministic Auto-Sort: Points DESC -> Place Pts DESC -> Kills DESC -> Booyah DESC -> Name ASC
-    processed.sort((a, b) => {
-      if (b.points !== a.points) return b.points - a.points;
-      if (b.placePts !== a.placePts) return b.placePts - a.placePts;
-      if (b.kills !== a.kills) return b.kills - a.kills;
-      if (b.booyah !== a.booyah) return b.booyah - a.booyah;
-      return a.name.localeCompare(b.name);
-    });
+    if (isKillsOnlyMode) {
+      // Deterministic Auto-Sort for Kills & Booyah (NO Rank Points)
+      processed.sort((a, b) => {
+        if (sortParam === 'kills') {
+          if (b.kills !== a.kills) return b.kills - a.kills;
+          if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+        } else if (sortParam === 'pts' || sortParam === 'formula') {
+          const scoreA = a.kills + (a.booyah * 10);
+          const scoreB = b.kills + (b.booyah * 10);
+          if (scoreB !== scoreA) return scoreB - scoreA;
+          if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+          if (b.kills !== a.kills) return b.kills - a.kills;
+        } else {
+          // Default: Booyah first -> Kills tiebreaker -> Name
+          if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+          if (b.kills !== a.kills) return b.kills - a.kills;
+        }
+        return a.name.localeCompare(b.name);
+      });
+    } else {
+      // Deterministic Auto-Sort: Points DESC -> Place Pts DESC -> Kills DESC -> Booyah DESC -> Name ASC
+      processed.sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        if (b.placePts !== a.placePts) return b.placePts - a.placePts;
+        if (b.kills !== a.kills) return b.kills - a.kills;
+        if (b.booyah !== a.booyah) return b.booyah - a.booyah;
+        return a.name.localeCompare(b.name);
+      });
+    }
 
     // Strictly assign ranks 1 to 12
     processed.forEach((t, i) => {

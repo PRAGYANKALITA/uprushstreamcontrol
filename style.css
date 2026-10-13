@@ -115,6 +115,67 @@ html, body {
   }
 }
 
+/* ===================================================================
+   DEFEATED / NON-ALIVE (ELIMINATED) TEAM STATE - QUITE DARK
+   =================================================================== */
+.leaderboard-row.defeated,
+.leaderboard-row.eliminated,
+.leaderboard-row.is-defeated,
+.leaderboard-row.is-eliminated {
+  filter: brightness(0.28) grayscale(0.65);
+  opacity: 0.52;
+  box-shadow: none !important;
+  transition: transform 0.65s cubic-bezier(0.2, 0.9, 0.3, 1), filter 0.4s ease, opacity 0.4s ease;
+}
+
+.leaderboard-row.defeated::after,
+.leaderboard-row.eliminated::after,
+.leaderboard-row.is-defeated::after,
+.leaderboard-row.is-eliminated::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.leaderboard-row.defeated .row-rank,
+.leaderboard-row.eliminated .row-rank,
+.leaderboard-row.is-defeated .row-rank,
+.leaderboard-row.is-eliminated .row-rank {
+  color: #64748b;
+  text-shadow: none;
+}
+
+.leaderboard-row.defeated .row-team-name,
+.leaderboard-row.eliminated .row-team-name,
+.leaderboard-row.is-defeated .row-team-name,
+.leaderboard-row.is-eliminated .row-team-name {
+  color: #94a3b8;
+  text-shadow: none;
+}
+
+.leaderboard-row.defeated .row-stat-kills,
+.leaderboard-row.eliminated .row-stat-kills,
+.leaderboard-row.is-defeated .row-stat-kills,
+.leaderboard-row.is-eliminated .row-stat-kills,
+.leaderboard-row.defeated .row-stat-points,
+.leaderboard-row.eliminated .row-stat-points,
+.leaderboard-row.is-defeated .row-stat-points,
+.leaderboard-row.is-eliminated .row-stat-points,
+.leaderboard-row.defeated .row-stat-booyah,
+.leaderboard-row.eliminated .row-stat-booyah,
+.leaderboard-row.is-defeated .row-stat-booyah,
+.leaderboard-row.is-eliminated .row-stat-booyah {
+  color: #64748b;
+  text-shadow: none;
+}
+
 /* Left Section: Rank & Team Name */
 .row-left-section {
   width: 240px;
@@ -177,8 +238,9 @@ html, body {
   transition: transform 0.3s ease, color 0.3s ease;
 }
 
-/* Points Column (Centered in its area) */
-.row-stat-points {
+/* Points / Booyah Column (Centered in its area) */
+.row-stat-points,
+.row-stat-booyah {
   font-family: 'GFF-Latin', sans-serif;
   font-weight: 800;
   font-size: 26px;

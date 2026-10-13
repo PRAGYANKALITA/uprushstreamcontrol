@@ -638,7 +638,8 @@ async function saveCurrentGameToSheet(isAutoSave = true) {
       name: t.name,
       kills: t.kills || 0,
       placePts: getPlacePts(idx + 1),
-      booyah: isWinner ? 1 : 0
+      booyah: isWinner ? 1 : 0,
+      isEliminated: (!isWinner && !!t.isEliminated) ? 1 : 0
     };
   });
 
